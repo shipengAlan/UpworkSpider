@@ -157,7 +157,7 @@ def formatResult(final_result):
 def outputResult(key, result):
     f = open('result.txt', 'a')
     js = json.loads(result)
-    content = js['employmentHistory']
+    content = js['assignments']
     f.write(key + ':' + json.dumps(content) + '\n')
     f.close()
 
