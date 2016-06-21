@@ -131,7 +131,7 @@ if __name__ == '__main__':
     #
     redundancy = 0
     num = 0
-    for i in range(100):
+    for i in range(1, 101):
         print 'page:', i
         r = random.random()
         if r > 0.5:
@@ -139,7 +139,7 @@ if __name__ == '__main__':
             time.sleep(r * 1.5)
         try:
             crl = pycurl.Curl()
-            pagelist = getPage(crl)
+            pagelist = getPage(crl, i)
             # crl = Login()
             otherJobs_list = []
             for i in range(len(pagelist)):
