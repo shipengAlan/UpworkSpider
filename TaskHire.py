@@ -122,23 +122,40 @@ def getOtherJobs(otherJob, crl):
     html_item_list = html_item_list.replace('\n', '')
     m = re.search('<span class="text-muted">Hires:</span>    (\d+)</p>', html_item_list)
     if m is not None:
-        print m.group()
-    return int(m.group(1))
-    #f = open('item%s.html' % otherJob['ciphertext'], 'w')
-    #f.write(html_item_list)
-    #f.close()
+        return int(m.group(1))
+    else:
+        return None
+
 
 if __name__ == '__main__':
     #
-    crl = pycurl.Curl()
-    pagelist = getPage(crl)
-    # crl = Login()
-    otherJobs_list = []
-    for i in range(len(pagelist)):
-        item_list = getItem(pagelist[i], crl)
-        otherJobs_list.extend(item_list)
-    out = open('items.txt', 'a')
-    for item in otherJobs_list:
-        out.write(json.dumps(item) + '\n')
-        getOtherJobs(item, crl)
-    out.close()
+    redundancy = 0
+    num = 0
+    for i in range(100):
+        print 'page:', i
+        r = random.random()
+        if r > 0.5:
+            print 'sleep %ss' % str(r * 1.5)
+            time.sleep(r * 1.5)
+        try:
+            crl = pycurl.Curl()
+            pagelist = getPage(crl)
+            # crl = Login()
+            otherJobs_list = []
+            for i in range(len(pagelist)):
+                item_list = getItem(pagelist[i], crl)
+                otherJobs_list.extend(item_list)
+            out = open('items.txt', 'a')
+            for item in otherJobs_list:
+                Hires = getOtherJobs(item, crl)
+                if Hires is not None:
+                    if int(Hires) > 1:
+                        redundancy += 1
+                    num += 1
+                out.write(str(Hires) + ':' + json.dumps(item) + '\n')
+            out.close()
+            print num, redundancy
+        except:
+            print 'timeout!'
+    print 'over!'
+    print num, redundancy
