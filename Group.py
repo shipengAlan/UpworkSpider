@@ -9,6 +9,8 @@ import json
 import time
 import random
 
+agency_id_set = set()
+char_id_set = set()
 
 def Login():
     useragent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:43.0) Gecko/20100101 Firefox/43.0"
@@ -24,7 +26,7 @@ def Login():
     crl.setopt(pycurl.URL, url)
     crl.setopt(pycurl.REFERER, url)
     crl.setopt(pycurl.FOLLOWLOCATION, True)
-    crl.setopt(pycurl.TIMEOUT, 60)
+    crl.setopt(pycurl.TIMEOUT, 100)
     crl.setopt(pycurl.ENCODING, 'gzip')
     crl.setopt(pycurl.USERAGENT, useragent)
     crl.setopt(pycurl.NOSIGNAL, True)
@@ -70,12 +72,12 @@ def getList(page, ccrl):
     useragent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:43.0) Gecko/20100101 Firefox/43.0"
     s = StringIO.StringIO()
     crl = pycurl.Curl()
-    crl.setopt(pycurl.COOKIEJAR, "cookie_file")
+    #crl.setopt(pycurl.COOKIEJAR, "cookie_file")
     crl.setopt(pycurl.PROXY, 'http://127.0.0.1:1080')
     crl.setopt(pycurl.URL, url)
     crl.setopt(pycurl.REFERER, url)
     crl.setopt(pycurl.FOLLOWLOCATION, True)
-    crl.setopt(pycurl.TIMEOUT, 60)
+    crl.setopt(pycurl.TIMEOUT, 100)
     crl.setopt(pycurl.ENCODING, 'gzip')
     crl.setopt(pycurl.USERAGENT, useragent)
     crl.setopt(pycurl.NOSIGNAL, True)
@@ -84,18 +86,22 @@ def getList(page, ccrl):
     html = s.getvalue()
     tree = etree.HTML(html)
     #items = tree.xpath('//*[@id="contractorTiles"]/section[1]/article/div/div[2]/ul/li')
+    print 'page:', page
     for c in range(1, 11):
         t = random.random()
-        if t > 0.9:
-            time.sleep(t * 1.1)
-            print 'sleep:', t * 1.1
+        #if t > 0.9:
+        #    time.sleep(t * 1.1)
+        #    print 'sleep:', t * 1.1
         article = tree.xpath('//*[@id="contractorTiles"]/section[%s]/article' % str(c))
-        print 'page:', page, ' group:', c
+        #print 'page:', page, ' group:', c
         link = article[0].xpath('./div/div[2]/div/span/a')[0].get('href')
-        result = getAgencyIdNum(link, ccrl)
-        print 'AgencyId:', result
-        if result is not None:
-            getMember(result, ccrl)
+        if link not in char_id_set:
+            char_id_set.add(link)
+            result = getAgencyIdNum(link, ccrl)
+        #print 'AgencyId:', result
+            agency_id_set.add(result)
+        #if result is not None:
+        #    getMember(result, ccrl)
 
 
 def getAgencyIdNum(link, crl):
@@ -107,7 +113,7 @@ def getAgencyIdNum(link, crl):
     crl.setopt(pycurl.URL, url)
     crl.setopt(pycurl.REFERER, url)
     crl.setopt(pycurl.FOLLOWLOCATION, True)
-    crl.setopt(pycurl.TIMEOUT, 60)
+    crl.setopt(pycurl.TIMEOUT, 100)
     crl.setopt(pycurl.ENCODING, 'gzip')
     crl.setopt(pycurl.USERAGENT, useragent)
     # crl.setopt(pycurl.NOSIGNAL, True)
@@ -132,7 +138,7 @@ def getUid(tid):
     crl.setopt(pycurl.PROXY, 'http://127.0.0.1:1080')
     crl.setopt(pycurl.REFERER, url)
     crl.setopt(pycurl.FOLLOWLOCATION, True)
-    crl.setopt(pycurl.TIMEOUT, 60)
+    crl.setopt(pycurl.TIMEOUT, 100)
     crl.setopt(pycurl.ENCODING, 'gzip')
     crl.setopt(pycurl.USERAGENT, useragent)
     crl.setopt(pycurl.NOSIGNAL, True)
@@ -154,8 +160,6 @@ def getMember(idnum, crl):
     result = getGroupProfile(idnum, crl)
     # get developer
     dict_result = json.loads(result)
-    
-    
     # developer
     developers = []
     dev_skill_set_e = set()
@@ -255,7 +259,7 @@ def getGroupProfile(idnum, crl):
     crl.setopt(pycurl.URL, link)
     crl.setopt(pycurl.REFERER, link)
     crl.setopt(pycurl.FOLLOWLOCATION, True)
-    crl.setopt(pycurl.TIMEOUT, 60)
+    crl.setopt(pycurl.TIMEOUT, 100)
     crl.setopt(pycurl.ENCODING, 'gzip')
     crl.setopt(pycurl.USERAGENT, useragent)
     # crl.setopt(pycurl.NOSIGNAL, True)
@@ -281,7 +285,7 @@ def getWorkerProfile(id_num, crl):
     crl.setopt(pycurl.URL, link)
     crl.setopt(pycurl.REFERER, link)
     crl.setopt(pycurl.FOLLOWLOCATION, True)
-    crl.setopt(pycurl.TIMEOUT, 60)
+    crl.setopt(pycurl.TIMEOUT, 100)
     crl.setopt(pycurl.ENCODING, 'gzip')
     crl.setopt(pycurl.USERAGENT, useragent)
     # crl.setopt(pycurl.NOSIGNAL, True)
@@ -292,12 +296,34 @@ def getWorkerProfile(id_num, crl):
 
 if __name__ == "__main__":
     crl = Login()
+    # step 1
+    """
     print 'Login success!'
     for i in range(1, 501):
         try:
             getList(i, crl)
         except Exception as e:
             print 'TIMEOUT', e
+    out = open('id_list.txt', 'w')
+    for it in agency_id_set:
+        out.write(str(it) + '\n')
+    out.close()
+    """
+    count = 1
+    with open('id_list.txt', 'r') as f:
+        while 1:
+            idnum = f.readline()
+            if not idnum:
+                break
+            if count > 397:
+                idnum = idnum.strip('\n')
+                try:
+                    getMember(idnum, crl)
+                except:
+                    f2 = open('timeout.txt', 'a+')
+                    f2.write(str(idnum) + '\n')
+                    f2.close()
+            count += 1
     """
     crl = Login()
     print 'Login Success!'
